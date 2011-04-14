@@ -15,6 +15,8 @@
 
 NSString * const MPOAuthAccessTokenURLKey					= @"MPOAuthAccessTokenURL";
 
+NSString * const MPOAuthAuthenticationErrorDomain           = @"MPOAuthAuthenticationErrorDomain";
+
 @interface MPOAuthAuthenticationMethod ()
 @property (nonatomic, readwrite, retain) NSTimer *refreshTimer;
 
@@ -93,7 +95,7 @@ NSString * const MPOAuthAccessTokenURLKey					= @"MPOAuthAccessTokenURL";
 
 #pragma mark -
 
-- (void)authenticate {
+- (void)beginAuthentication {
 	[NSException raise:@"Not Implemented" format:@"All subclasses of MPOAuthAuthenticationMethod are required to implement -authenticate"];
 }
 

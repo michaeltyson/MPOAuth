@@ -50,7 +50,7 @@
 			[(MPOAuthAuthenticationMethodOAuth *)[_oauthAPI authenticationMethod] setDelegate:(id <MPOAuthAuthenticationMethodOAuthDelegate>)[UIApplication sharedApplication].delegate];
 		}
 	} else {
-		[_oauthAPI authenticate];
+		[_oauthAPI beginAuthentication];
 	}
 }
 
@@ -95,7 +95,7 @@
 - (void)reauthenticate {
 	[self.navigationItem setPrompt:@"Reauthenticating User"];
 	textOutput.text = @"";
-	[_oauthAPI authenticate];	
+	[_oauthAPI beginAuthentication];	
 }
 
 @end

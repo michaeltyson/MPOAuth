@@ -17,13 +17,13 @@
 @implementation MPOAuthAuthenticationMethodXAuth
 
 - (id)initWithAPI:(MPOAuthAPI *)inAPI forURL:(NSURL *)inURL withConfiguration:(NSDictionary *)inConfig {
-	if (self = [super initWithAPI:inAPI forURL:inURL withConfiguration:inConfig]) {
+	if ((self = [super initWithAPI:inAPI forURL:inURL withConfiguration:inConfig])) {
 		self.oauthGetAccessTokenURL = [NSURL URLWithString:[inConfig objectForKey:MPOAuthAccessTokenURLKey]];
 	}
 	return self;
 }
 
-- (void)authenticate {
+- (void)beginAuthentication {
 	id <MPOAuthCredentialStore> credentials = [self.oauthAPI credentials];
 	
 	if (!credentials.accessToken && !credentials.accessTokenSecret) {
@@ -37,19 +37,24 @@
 		MPURLRequestParameter *passwordParameter = [[MPURLRequestParameter alloc] initWithName:@"x_auth_password" andValue:password];
 		MPURLRequestParameter *clientModeParameter = [[MPURLRequestParameter alloc] initWithName:@"x_auth_mode" andValue:@"client_auth"];
 		
+        [self.oauthAPI setAuthenticationState:MPOAuthAuthenticationStateAuthenticating];
 		[self.oauthAPI performPOSTMethod:nil
 								   atURL:self.oauthGetAccessTokenURL
 						  withParameters:[NSArray arrayWithObjects:usernameParameter, passwordParameter, clientModeParameter, nil]
 							  withTarget:self
 							   andAction:nil];
+        
 	} else if (credentials.accessToken && credentials.accessTokenSecret) {
 		NSTimeInterval expiryDateInterval = [[NSUserDefaults standardUserDefaults] doubleForKey:MPOAuthTokenRefreshDateDefaultsKey];
 		NSDate *tokenExpiryDate = [NSDate dateWithTimeIntervalSinceReferenceDate:expiryDateInterval];
 		
 		if ([tokenExpiryDate compare:[NSDate date]] == NSOrderedAscending) {
+            [self.oauthAPI setAuthenticationState:MPOAuthAuthenticationStateAuthenticating];
 			[self refreshAccessToken];
 		}
-	}	
+	} else {
+        [self.oauthAPI setAuthenticationState:MPOAuthAuthenticationStateAuthenticated];
+    }
 	
 }
 

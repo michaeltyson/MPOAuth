@@ -23,13 +23,13 @@
 @implementation MPOAuthAuthenticationMethodAuthExchange
 
 - (id)initWithAPI:(MPOAuthAPI *)inAPI forURL:(NSURL *)inURL withConfiguration:(NSDictionary *)inConfig {
-	if (self = [super initWithAPI:inAPI forURL:inURL withConfiguration:inConfig]) {
+	if ((self = [super initWithAPI:inAPI forURL:inURL withConfiguration:inConfig])) {
 		self.oauthGetAccessTokenURL = [NSURL URLWithString:[inConfig objectForKey:MPOAuthAccessTokenURLKey]];
 	}
 	return self;
 }
 
-- (void)authenticate {
+- (void)beginAuthentication {
 	id <MPOAuthCredentialStore> credentials = [self.oauthAPI credentials];
 	
 	if (!credentials.accessToken && !credentials.accessTokenSecret) {
@@ -42,6 +42,7 @@
 		MPURLRequestParameter *usernameParameter = [[MPURLRequestParameter alloc] initWithName:@"fs_username" andValue:username];
 		MPURLRequestParameter *passwordParameter = [[MPURLRequestParameter alloc] initWithName:@"fs_password" andValue:password];
 		
+        [self.oauthAPI setAuthenticationState:MPOAuthAuthenticationStateAuthenticating];
 		[self.oauthAPI performPOSTMethod:nil
 								   atURL:self.oauthGetAccessTokenURL
 						  withParameters:[NSArray arrayWithObjects:usernameParameter, passwordParameter, nil]
@@ -52,10 +53,12 @@
 		NSDate *tokenExpiryDate = [NSDate dateWithTimeIntervalSinceReferenceDate:expiryDateInterval];
 		
 		if ([tokenExpiryDate compare:[NSDate date]] == NSOrderedAscending) {
+            [self.oauthAPI setAuthenticationState:MPOAuthAuthenticationStateAuthenticating];
 			[self refreshAccessToken];
 		}
-	}	
-	
+	} else {
+        [self.oauthAPI setAuthenticationState:MPOAuthAuthenticationStateAuthenticated];
+    }
 }
 
 - (void)_performedLoad:(MPOAuthAPIRequestLoader *)inLoader receivingData:(NSData *)inData {

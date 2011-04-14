@@ -44,7 +44,7 @@ NSString * const MPOAuthCredentialVerifierKey				= @"oauth_verifier";
 @implementation MPOAuthAuthenticationMethodOAuth
 
 - (id)initWithAPI:(MPOAuthAPI *)inAPI forURL:(NSURL *)inURL withConfiguration:(NSDictionary *)inConfig {
-	if (self = [super initWithAPI:inAPI forURL:inURL withConfiguration:inConfig]) {
+	if ((self = [super initWithAPI:inAPI forURL:inURL withConfiguration:inConfig])) {
 		
 		NSAssert( [inConfig count] >= 3, @"Incorrect number of oauth authorization methods");
 		self.oauthRequestTokenURL = [NSURL URLWithString:[inConfig objectForKey:MPOAuthRequestTokenURLKey]];
@@ -53,7 +53,7 @@ NSString * const MPOAuthCredentialVerifierKey				= @"oauth_verifier";
 		
 		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_requestTokenReceived:) name:MPOAuthNotificationRequestTokenReceived object:nil];
 		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_requestTokenRejected:) name:MPOAuthNotificationRequestTokenRejected object:nil];
-		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_accessTokenReceived:) name:MPOAuthNotificationAccessTokenReceived object:nil];		
+		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_accessTokenReceived:) name:MPOAuthNotificationAccessTokenReceived object:nil];
 	}
 	return self;
 }
@@ -74,21 +74,26 @@ NSString * const MPOAuthCredentialVerifierKey				= @"oauth_verifier";
 
 #pragma mark -
 
-- (void)authenticate {
+- (void)beginAuthentication {
 	id <MPOAuthCredentialStore> credentials = [self.oauthAPI credentials];
 	
 	if (!credentials.accessToken && !credentials.requestToken) {
+        [self.oauthAPI setAuthenticationState:MPOAuthAuthenticationStateAuthenticating];
 		[self _authenticationRequestForRequestToken];
 	} else if (!credentials.accessToken) {
+        [self.oauthAPI setAuthenticationState:MPOAuthAuthenticationStateAuthenticating];
 		[self _authenticationRequestForAccessToken];
 	} else if (credentials.accessToken && [[NSUserDefaults standardUserDefaults] objectForKey:MPOAuthTokenRefreshDateDefaultsKey]) {
 		NSTimeInterval expiryDateInterval = [[NSUserDefaults standardUserDefaults] doubleForKey:MPOAuthTokenRefreshDateDefaultsKey];
 		NSDate *tokenExpiryDate = [NSDate dateWithTimeIntervalSinceReferenceDate:expiryDateInterval];
 			
 		if ([tokenExpiryDate compare:[NSDate date]] == NSOrderedAscending) {
+            [self.oauthAPI setAuthenticationState:MPOAuthAuthenticationStateAuthenticating];
 			[self refreshAccessToken];
 		}
-	}	
+	} else {
+        [self.oauthAPI setAuthenticationState:MPOAuthAuthenticationStateAuthenticated];
+    }
 }
 
 - (void)_authenticationRequestForRequestToken {
@@ -112,6 +117,15 @@ NSString * const MPOAuthCredentialVerifierKey				= @"oauth_verifier";
 
 - (void)_authenticationRequestForRequestTokenSuccessfulLoad:(MPOAuthAPIRequestLoader *)inLoader withData:(NSData *)inData {
 	NSDictionary *oauthResponseParameters = inLoader.oauthResponse.oauthParameters;
+    if ( ![oauthResponseParameters objectForKey:@"oauth_token"] ) {
+        if ([self.delegate respondsToSelector:@selector(authenticationDidFailWithError:)]) {
+            [self.delegate authenticationDidFailWithError:[NSError errorWithDomain:MPOAuthAuthenticationErrorDomain
+                                                                              code:MPOAuthAuthenticationErrorUnknown
+                                                                          userInfo:nil]];
+        }
+        return;
+    }
+    
 	NSString *xoauthRequestAuthURL = [oauthResponseParameters objectForKey:@"xoauth_request_auth_url"]; // a common custom extension, used by Yahoo!
 	NSURL *userAuthURL = xoauthRequestAuthURL ? [NSURL URLWithString:xoauthRequestAuthURL] : self.oauthAuthorizeTokenURL;
 	NSURL *callbackURL = nil;
@@ -180,6 +194,7 @@ NSString * const MPOAuthCredentialVerifierKey				= @"oauth_verifier";
 - (void)_requestTokenRejected:(NSNotification *)inNotification {
 	[self.oauthAPI removeCredentialNamed:MPOAuthCredentialRequestTokenKey];
 	[self.oauthAPI removeCredentialNamed:MPOAuthCredentialRequestTokenSecretKey];
+    [self beginAuthentication];
 }
 
 - (void)_accessTokenReceived:(NSNotification *)inNotification {

@@ -53,7 +53,7 @@ NSString * const MPOAuthAuthenticationURLKey		= @"MPOAuthAuthenticationURL";
 }
 
 - (id)initWithCredentials:(NSDictionary *)inCredentials authenticationURL:(NSURL *)inAuthURL andBaseURL:(NSURL *)inBaseURL autoStart:(BOOL)aFlag {
-	if (self = [super init]) {
+	if ((self = [super init])) {
 		self.authenticationURL = inAuthURL;
 		self.baseURL = inBaseURL;
 		self.authenticationState = MPOAuthAuthenticationStateUnauthenticated;
@@ -64,14 +64,14 @@ NSString * const MPOAuthAuthenticationURLKey		= @"MPOAuthAuthenticationURL";
 		activeLoaders_ = [[NSMutableArray alloc] initWithCapacity:10];
 		
 		if (aFlag) {
-			[self authenticate];
+			[self beginAuthentication];
 		}
 	}
 	return self;	
 }
 
 - (id)initWithCredentials:(NSDictionary *)inCredentials withConfiguration:(NSDictionary *)inConfiguration autoStart:(BOOL)aFlag {
-	if (self = [super init]) {
+	if ((self = [super init])) {
 		self.authenticationURL = [inConfiguration valueForKey:MPOAuthAuthenticationURLKey];
 		self.baseURL = [inConfiguration valueForKey:MPOAuthBaseURLKey];
 		self.authenticationState = MPOAuthAuthenticationStateUnauthenticated;
@@ -82,7 +82,7 @@ NSString * const MPOAuthAuthenticationURLKey		= @"MPOAuthAuthenticationURL";
 		activeLoaders_ = [[NSMutableArray alloc] initWithCapacity:10];
 		
 		if (aFlag) {
-			[self authenticate];
+			[self beginAuthentication];
 		}
 	}
 	return self;	
@@ -130,9 +130,9 @@ NSString * const MPOAuthAuthenticationURLKey		= @"MPOAuthAuthenticationURL";
 
 #pragma mark -
 
-- (void)authenticate {
+- (void)beginAuthentication {
 	NSAssert(credentials_.consumerKey, @"A Consumer Key is required for use of OAuth.");
-	[self.authenticationMethod authenticate];
+	[self.authenticationMethod beginAuthentication];
 }
 
 - (BOOL)isAuthenticated {

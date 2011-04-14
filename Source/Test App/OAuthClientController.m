@@ -50,7 +50,7 @@
 										  authenticationURL:[NSURL URLWithString:[authenticationURLField stringValue]]
 												 andBaseURL:[NSURL URLWithString:[baseURLField stringValue]]];		
 	} else {
-		[_oauthAPI authenticate];
+		[_oauthAPI beginAuthentication];
 	}
 }
 
