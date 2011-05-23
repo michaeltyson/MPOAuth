@@ -94,7 +94,7 @@ NSString * const MPOAuthNotificationErrorHasOccurred		= @"MPOAuthNotificationErr
 	NSAssert(_credentials.consumerKey, @"Unable to load, credentials contain no consumer key");
 	
 	if (!inSynchronous) {
-		[MPOAuthConnection connectionWithRequest:self.oauthRequest delegate:self credentials:self.credentials];
+		_connection = [MPOAuthConnection connectionWithRequest:self.oauthRequest delegate:self credentials:self.credentials];
 	} else {
 		MPOAuthURLResponse *theOAuthResponse = nil;
 		self.data = [MPOAuthConnection sendSynchronousRequest:self.oauthRequest usingCredentials:self.credentials returningResponse:&theOAuthResponse error:nil];
@@ -103,9 +103,17 @@ NSString * const MPOAuthNotificationErrorHasOccurred		= @"MPOAuthNotificationErr
 	}
 }
 
+- (void)cancel {
+    if ( _connection ) {
+        [_connection cancel];
+        _connection = nil;
+    }
+}
+
 #pragma mark -
 
 - (void)connection:(NSURLConnection *)connection didFailWithError:(NSError *)error {
+    _connection = nil;
 		MPLog(@"%p: [%@ %@] %@, %@", self, NSStringFromClass([self class]), NSStringFromSelector(_cmd), connection, error);
 	if ([_target respondsToSelector:@selector(loader:didFailWithError:)]) {
 		[_target performSelector: @selector(loader:didFailWithError:) withObject: self withObject: error];
@@ -130,6 +138,7 @@ NSString * const MPOAuthNotificationErrorHasOccurred		= @"MPOAuthNotificationErr
 }
 
 - (void)connectionDidFinishLoading:(NSURLConnection *)connection {
+    _connection = nil;
 	[self _interrogateResponseForOAuthData];
 	
 	if ( _action ) {

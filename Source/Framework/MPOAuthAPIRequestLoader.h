@@ -18,12 +18,14 @@ extern NSString * const MPOAuthNotificationErrorHasOccurred;
 @protocol MPOAuthCredentialStore;
 @protocol MPOAuthParameterFactory;
 
+@class MPOAuthConnection;
 @class MPOAuthURLRequest;
 @class MPOAuthURLResponse;
 @class MPOAuthCredentialConcreteStore;
 
 @interface MPOAuthAPIRequestLoader : NSObject {
 	MPOAuthCredentialConcreteStore	*_credentials;
+    MPOAuthConnection               *_connection;
 	MPOAuthURLRequest				*_oauthRequest;
 	MPOAuthURLResponse				*_oauthResponse;
 	NSMutableData					*_dataBuffer;
@@ -45,6 +47,8 @@ extern NSString * const MPOAuthNotificationErrorHasOccurred;
 - (id)initWithRequest:(MPOAuthURLRequest *)inRequest;
 
 - (void)loadSynchronously:(BOOL)inSynchronous;
+
+- (void)cancel;
 
 @end
 
