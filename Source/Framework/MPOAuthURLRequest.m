@@ -34,9 +34,6 @@
 		self.parameters = [[[MPURLRequestParameter parametersFromString:[[inRequest URL] query]] mutableCopy] autorelease];
 		self.HTTPMethod = [inRequest HTTPMethod];
 		self.urlRequest = [[inRequest mutableCopy] autorelease];
-        if ( [self.HTTPMethod isEqualToString:@"POST"] && [[[inRequest allHTTPHeaderFields] valueForKey:@"Content-Type"] rangeOfString:@"application/x-www-form-urlencoded"].location != NSNotFound ) {
-            [self.parameters addObjectsFromArray:[MPURLRequestParameter parametersFromString:[[[NSString alloc] initWithData:[inRequest HTTPBody] encoding:NSUTF8StringEncoding] autorelease]]];
-        }
 	}
 	return self;
 }
